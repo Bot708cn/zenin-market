@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { ShoppingBag, X, Plus, Minus, Check, Copy, ArrowRight, ArrowLeft } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -28,7 +27,6 @@ const GlobalStyle = () => (
 );
 
 export default function StorePage() {
-  const router = useRouter();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("home"); // home | checkout | confirm
@@ -112,21 +110,6 @@ export default function StorePage() {
 
   const selectedMethod = MOBILE_MONEY.find((m) => m.key === form.method);
 
-  const logoClicks = useRef(0);
-  const logoClickTimer = useRef(null);
-  function handleLogoClick() {
-    logoClicks.current += 1;
-    if (logoClickTimer.current) clearTimeout(logoClickTimer.current);
-    if (logoClicks.current >= 10) {
-      logoClicks.current = 0;
-      router.push("/admin");
-      return;
-    }
-    logoClickTimer.current = setTimeout(() => {
-      logoClicks.current = 0;
-    }, 2000);
-  }
-
   return (
     <div style={{ minHeight: "100vh", background: "#05070A", color: "#EAF1FF", fontFamily: "'Inter', sans-serif" }}>
       <GlobalStyle />
@@ -138,7 +121,7 @@ export default function StorePage() {
         }}
       >
         <button
-          onClick={() => { setView("home"); handleLogoClick(); }}
+          onClick={() => setView("home")}
           style={{ background: "none", border: "none", padding: 0 }}
         >
           <Logo />
