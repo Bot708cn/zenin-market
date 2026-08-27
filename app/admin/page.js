@@ -193,6 +193,7 @@ function ProductForm({ initial, onDone, onCancel }) {
   const [price, setPrice] = useState(initial?.price || "");
   const [category, setCategory] = useState(initial?.category || "T-shirts");
   const [sizes, setSizes] = useState((initial?.sizes || ["S", "M", "L"]).join(", "));
+  const [description, setDescription] = useState(initial?.description || "");
   const [images, setImages] = useState(initial?.images || []);
   const [video, setVideo] = useState(initial?.video || null);
   const [error, setError] = useState("");
@@ -260,6 +261,7 @@ function ProductForm({ initial, onDone, onCancel }) {
       sizes: sizes.split(",").map((s) => s.trim()).filter(Boolean),
       images,
       video,
+      description,
     };
     let dbError;
     if (initial?.id) {
@@ -294,6 +296,17 @@ function ProductForm({ initial, onDone, onCancel }) {
           </select>
         </div>
         <Field label="Tailles (séparées par des virgules)" value={sizes} onChange={setSizes} placeholder="S, M, L, XL" />
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ fontSize: 12, color: "#7C89A6", display: "block", marginBottom: 6 }}>Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            placeholder="Décris l'article, la matière, la coupe..."
+            style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid #1C2436", background: "#0D1220", color: "#EAF1FF", fontSize: 14, resize: "vertical", fontFamily: "'Inter', sans-serif" }}
+          />
+        </div>
 
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontSize: 12, color: "#7C89A6", display: "block", marginBottom: 8 }}>Photos</label>

@@ -411,8 +411,14 @@ function ProductDetail({ product, onClose, onAdd }) {
         )}
 
         <div style={{ padding: "10px 20px 0" }}>
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 19, margin: "0 0 6px" }}>{product.name}</h2>
-          <div style={{ fontSize: 17, fontWeight: 700, color: "#9FD9FF", marginBottom: 18 }}>{fmt(product.price)}</div>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: 24, lineHeight: 1.2, margin: "0 0 8px" }}>{product.name}</h2>
+          <div style={{ fontSize: 17, fontWeight: 700, color: "#9FD9FF", marginBottom: 14 }}>{fmt(product.price)}</div>
+
+          {product.description && (
+            <p style={{ fontFamily: "'Kaushan Script', cursive", fontSize: 20, lineHeight: 1.5, color: "#C9D6EE", margin: "0 0 20px" }}>
+              {product.description}
+            </p>
+          )}
 
           <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 8 }}>Taille</div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 22 }}>
