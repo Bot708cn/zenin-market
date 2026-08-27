@@ -187,7 +187,7 @@ export default function StorePage() {
                   fontSize: "clamp(28px, 6vw, 44px)", lineHeight: 1.15, margin: "0 0 14px",
                 }}
               >
-                Le streetwear malgache,
+                Tout ce dont vous avez besoin, au même endroit. 🇲🇬
                 <br />
                 <span
                   style={{
@@ -198,9 +198,6 @@ export default function StorePage() {
                   livré chez toi.
                 </span>
               </h1>
-              <p style={{ color: "#7C89A6", maxWidth: 420, margin: "0 auto", fontSize: 15, lineHeight: 1.6 }}>
-                T-shirts et shorts sélectionnés, paiement en Mobile Money — Mvola, Orange Money, Airtel Money.
-              </p>
             </div>
           </section>
 
