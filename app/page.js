@@ -556,3 +556,160 @@ function ConfirmView({ orderId, onHome }) {
     </div>
   );
 }
+// Composant pour l'essayage virtuel
+function VirtualTryOn({ product, onClose }) {
+  const [personPhoto, setPersonPhoto] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+  const fileInputRef = useRef(null);
+
+  async function handlePhotoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Vérifier la taille (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError("La photo ne doit pas dépasser 5MB");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    // Convertir l'image en base64
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result;
+      setPersonPhoto(base64);
+
+      // Appeler l'API de try-on
+      try {
+        const response = await fetch("/api/tryon", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            personImage: base64,
+            garmentImage: product.images[0],
+          }),
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          setResult(data.image);
+        } else {
+          setError(data.error || "Erreur lors de l'essayage");
+        }
+      } catch (err) {
+        setError("Erreur de connexion au serveur");
+      }
+      
+      setLoading(false);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, background: "#05070A", overflowY: "auto" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 5, display: "flex", justifyContent: "space-between", padding: 14, background: "linear-gradient(180deg, rgba(5,7,10,0.9), transparent)" }}>
+        <h3 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, margin: 0 }}> Essayage Virtuel</h3>
+        <button onClick={onClose} style={{ background: "rgba(13,18,32,0.9)", border: "1px solid #1C2436", borderRadius: 999, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", color: "#EAF1FF" }}>
+          <X size={18} />
+        </button>
+      </div>
+
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "20px" }}>
+        <div style={{ background: "#0D1220", border: "1px solid #1C2436", borderRadius: 12, padding: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: "#7C89A6", marginBottom: 8 }}>Produit :</div>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <img src={product.images[0]} alt={product.name} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8 }} />
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{product.name}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#9FD9FF" }}>{fmt(product.price)}</div>
+            </div>
+          </div>
+        </div>
+
+        {!personPhoto ? (
+          <div style={{ textAlign: "center", padding: "40px 20px" }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#4FD0FF,#1E5CFF)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+              <ShoppingBag size={32} color="#05070A" />
+            </div>
+            <h4 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 16, marginBottom: 8 }}>Upload ta photo</h4>
+            <p style={{ color: "#7C89A6", fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>
+              Prends un selfie ou upload une photo de toi en pied pour voir comment ce vêtement te va !
+            </p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={{ padding: "12px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#4FD0FF,#1E5CFF)", color: "#05070A", fontWeight: 700, fontSize: 14 }}
+            >
+              Choisir une photo
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              style={{ display: "none" }}
+            />
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+              <div>
+                <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 6 }}>Toi</div>
+                <img src={personPhoto} alt="Person" style={{ width: "100%", borderRadius: 8, border: "1px solid #1C2436" }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 6 }}>Vêtement</div>
+                <img src={product.images[0]} alt="Garment" style={{ width: "100%", borderRadius: 8, border: "1px solid #1C2436" }} />
+              </div>
+            </div>
+
+            {loading && (
+              <div style={{ textAlign: "center", padding: 40 }}>
+                <div style={{ width: 40, height: 40, border: "3px solid #1C2436", borderTopColor: "#4FD0FF", borderRadius: "50%", animation: "spin 1s linear infinite", margin: "0 auto 12px" }} />
+                <p style={{ color: "#7C89A6", fontSize: 13 }}>L'IA génère ton essayage...</p>
+                <p style={{ color: "#7C89A6", fontSize: 11, marginTop: 8 }}>Cela peut prendre 10-30 secondes</p>
+              </div>
+            )}
+
+            {result && (
+              <div>
+                <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 6 }}>Résultat</div>
+                <img src={result} alt="Try-on result" style={{ width: "100%", borderRadius: 12, border: "2px solid #4FD0FF" }} />
+                <button
+                  onClick={() => { setPersonPhoto(null); setResult(null); onClose(); }}
+                  style={{ width: "100%", padding: "12px", marginTop: 16, borderRadius: 10, border: "none", background: "linear-gradient(135deg,#4FD0FF,#1E5CFF)", color: "#05070A", fontWeight: 700, fontSize: 14 }}
+                >
+                  Ajouter au panier
+                </button>
+              </div>
+            )}
+
+            {error && (
+              <div style={{ background: "rgba(255,124,124,0.1)", border: "1px solid #FF7C7C", borderRadius: 8, padding: 12, marginBottom: 16 }}>
+                <p style={{ color: "#FF7C7C", fontSize: 12, margin: 0 }}>{error}</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => { setPersonPhoto(null); setResult(null); }}
+              style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #1C2436", background: "none", color: "#7C89A6", fontSize: 12, marginTop: 12 }}
+            >
+              Prendre une autre photo
+            </button>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+          }
