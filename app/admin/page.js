@@ -119,7 +119,7 @@ function OrdersPanel({ orders, onChanged }) {
 
           <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 10 }}>
             {(o.items || []).map((it, i) => (
-              <div key={i}>{it.qty} × {it.name} ({it.size})</div>
+              <div key={i}>{it.qty} × {it.name}{it.size ? ` (${it.size})` : ""}</div>
             ))}
           </div>
 
@@ -192,7 +192,7 @@ function ProductForm({ initial, onDone, onCancel }) {
   const [name, setName] = useState(initial?.name || "");
   const [price, setPrice] = useState(initial?.price || "");
   const [category, setCategory] = useState(initial?.category || "T-shirts");
-  const [sizes, setSizes] = useState((initial?.sizes || ["S", "M", "L"]).join(", "));
+  const [sizes, setSizes] = useState((initial?.sizes || []).join(", "));
   const [description, setDescription] = useState(initial?.description || "");
   const [images, setImages] = useState(initial?.images || []);
   const [video, setVideo] = useState(initial?.video || null);
@@ -293,9 +293,11 @@ function ProductForm({ initial, onDone, onCancel }) {
           <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid #1C2436", background: "#0D1220", color: "#EAF1FF", fontSize: 14 }}>
             <option value="T-shirts">T-shirts</option>
             <option value="Shorts">Shorts</option>
+            <option value="Cosmétiques">Cosmétiques</option>
+            <option value="Bijoux">Bijoux</option>
           </select>
         </div>
-        <Field label="Tailles (séparées par des virgules)" value={sizes} onChange={setSizes} placeholder="S, M, L, XL" />
+        <Field label="Tailles (optionnel — séparées par des virgules)" value={sizes} onChange={setSizes} placeholder="S, M, L, XL — laisse vide si non applicable" />
 
         <div style={{ marginBottom: 16 }}>
           <label style={{ fontSize: 12, color: "#7C89A6", display: "block", marginBottom: 6 }}>Description</label>

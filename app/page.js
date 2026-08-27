@@ -51,7 +51,7 @@ export default function StorePage() {
     loadProducts();
   }, []);
 
-  const categories = ["Tous", "T-shirts", "Shorts"];
+  const categories = ["Tous", "T-shirts", "Shorts", "Cosmétiques", "Bijoux"];
   const filtered = filter === "Tous" ? products : products.filter((p) => p.category === filter);
 
   const cartDetailed = useMemo(
@@ -277,7 +277,7 @@ export default function StorePage() {
                   <img src={c.product.images?.[0]} alt="" style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 8 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{c.product.name}</div>
-                    <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 6 }}>Taille {c.size}</div>
+                    {c.size && <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 6 }}>Taille {c.size}</div>}
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <button onClick={() => changeQty(c.id, c.size, -1)} style={{ width: 22, height: 22, borderRadius: 6, border: "1px solid #1C2436", background: "none", color: "#EAF1FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -342,15 +342,17 @@ function ProductCard({ product, onAdd, onOpenDetail }) {
           <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3, marginBottom: 4 }}>{product.name}</div>
           <div style={{ fontSize: 14, fontWeight: 700, color: "#9FD9FF", marginBottom: 10 }}>{fmt(product.price)}</div>
         </button>
-        <select
-          value={size}
-          onChange={(e) => setSize(e.target.value)}
-          style={{ width: "100%", padding: "8px 10px", marginBottom: 8, borderRadius: 8, border: "1px solid #1C2436", background: "#05070A", color: "#EAF1FF", fontSize: 12 }}
-        >
-          {(product.sizes || []).map((s) => (
-            <option key={s} value={s}>Taille {s}</option>
-          ))}
-        </select>
+        {(product.sizes || []).length > 0 && (
+          <select
+            value={size}
+            onChange={(e) => setSize(e.target.value)}
+            style={{ width: "100%", padding: "8px 10px", marginBottom: 8, borderRadius: 8, border: "1px solid #1C2436", background: "#05070A", color: "#EAF1FF", fontSize: 12 }}
+          >
+            {(product.sizes || []).map((s) => (
+              <option key={s} value={s}>Taille {s}</option>
+            ))}
+          </select>
+        )}
         <button
           onClick={() => onAdd(product, size)}
           style={{ width: "100%", padding: "10px", borderRadius: 8, border: "1px solid #1E5CFF", background: "rgba(30,92,255,0.12)", color: "#9FD9FF", fontWeight: 600, fontSize: 12 }}
@@ -420,23 +422,27 @@ function ProductDetail({ product, onClose, onAdd }) {
             </p>
           )}
 
-          <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 8 }}>Taille</div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 22 }}>
-            {(product.sizes || []).map((s) => (
-              <button
-                key={s}
-                onClick={() => setSize(s)}
-                style={{
-                  padding: "9px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-                  border: "1px solid " + (size === s ? "transparent" : "#1C2436"),
-                  background: size === s ? "linear-gradient(135deg,#4FD0FF,#1E5CFF)" : "#0D1220",
-                  color: size === s ? "#05070A" : "#EAF1FF",
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+          {(product.sizes || []).length > 0 && (
+            <>
+              <div style={{ fontSize: 12, color: "#7C89A6", marginBottom: 8 }}>Taille</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 22 }}>
+                {(product.sizes || []).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSize(s)}
+                    style={{
+                      padding: "9px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+                      border: "1px solid " + (size === s ? "transparent" : "#1C2436"),
+                      background: size === s ? "linear-gradient(135deg,#4FD0FF,#1E5CFF)" : "#0D1220",
+                      color: size === s ? "#05070A" : "#EAF1FF",
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           <button
             onClick={() => { onAdd(product, size); onClose(); }}
@@ -462,7 +468,7 @@ function CheckoutView({ cartDetailed, total, form, setForm, onBack, onSubmit, me
       <div style={{ background: "#0D1220", border: "1px solid #1C2436", borderRadius: 12, padding: 14, marginBottom: 20 }}>
         {cartDetailed.map((c) => (
           <div key={c.id + c.size} style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
-            <span style={{ color: "#7C89A6" }}>{c.qty} × {c.product.name} ({c.size})</span>
+            <span style={{ color: "#7C89A6" }}>{c.qty} × {c.product.name}{c.size ? ` (${c.size})` : ""}</span>
             <span>{fmt(c.product.price * c.qty)}</span>
           </div>
         ))}
