@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabaseAdmin";
-import { signSession } from "../../../lib/adminSession";
+import { signSession, verifySession } from "../../../lib/adminSession";
 import { SESSION_COOKIE_NAME } from "../../../lib/requireAdmin";
 
 export async function POST(request) {
@@ -23,32 +23,31 @@ export async function POST(request) {
       return NextResponse.json({ ok: false, error: "Email ou mot de passe incorrect." }, { status: 401 });
     }
 
-    return NextResponse.json({ ok: true, pseudo: data.pseudo });
+    // Jeton intermédiaire prouvant que l'étape 1 est passée — le navigateur
+    // n'a plus besoin de renvoyer l'email lui-même à l'étape 2 (ce qui
+    // pouvait être modifié par l'autocomplétion du clavier).
+    const stepToken = signSession({ email: data.email, pseudo: data.pseudo, purpose: "step1" });
+
+    return NextResponse.json({ ok: true, pseudo: data.pseudo, stepToken });
   }
 
   // Étape 2 : vérifier le mot de passe universel, puis poser le cookie de session
   if (body.step === "universal") {
-    const { email, password } = body;
+    const { password, stepToken } = body;
     const universalPassword = process.env.ADMIN_UNIVERSAL_PASSWORD;
+
+    const verified = verifySession(stepToken);
+    if (!verified || verified.purpose !== "step1") {
+      return NextResponse.json({ ok: false, error: "Session invalide, recommence depuis le début." }, { status: 401 });
+    }
 
     if (!password || password !== universalPassword) {
       return NextResponse.json({ ok: false, error: "Mot de passe universel incorrect." }, { status: 401 });
     }
 
-    // On revérifie l'email pour récupérer un pseudo fiable (pas celui envoyé par le navigateur)
-    const { data, error } = await supabaseAdmin
-      .from("admin_users")
-      .select("email, pseudo")
-      .eq("email", (email || "").trim().toLowerCase())
-      .maybeSingle();
+    const token = signSession({ email: verified.email, pseudo: verified.pseudo });
 
-    if (error || !data) {
-      return NextResponse.json({ ok: false, error: "Session invalide, recommence depuis le début." }, { status: 401 });
-    }
-
-    const token = signSession({ email: data.email, pseudo: data.pseudo });
-
-    const response = NextResponse.json({ ok: true, pseudo: data.pseudo });
+    const response = NextResponse.json({ ok: true, pseudo: verified.pseudo });
     response.cookies.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: true,

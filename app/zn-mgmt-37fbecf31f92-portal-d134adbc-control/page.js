@@ -48,6 +48,7 @@ function LoginFlow({ onSuccess }) {
   const [password, setPassword] = useState("");
   const [universalPassword, setUniversalPassword] = useState("");
   const [pseudo, setPseudo] = useState("");
+  const [stepToken, setStepToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -71,6 +72,7 @@ function LoginFlow({ onSuccess }) {
         return;
       }
       setPseudo(data.pseudo);
+      setStepToken(data.stepToken);
       setStep("universal");
     } catch (e) {
       setError("Erreur de connexion. Réessaie.");
@@ -89,7 +91,7 @@ function LoginFlow({ onSuccess }) {
       const res = await fetch("/api/admin-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ step: "universal", password: universalPassword, email }),
+        body: JSON.stringify({ step: "universal", password: universalPassword, stepToken }),
       });
       const data = await res.json();
       if (!data.ok) {
