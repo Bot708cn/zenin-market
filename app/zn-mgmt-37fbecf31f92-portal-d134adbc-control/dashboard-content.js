@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Package, ClipboardList, LogOut, Trash2, Pencil, Plus, X, ArrowLeft } from "lucide-react";
-import { supabase } from "../../lib/supabaseClient";
 
 const fmt = (n) => Number(n).toLocaleString("fr-FR") + " Ar";
 const fmtDate = (d) => new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -24,12 +23,12 @@ export default function AdminDashboard({ pseudo, onLogout }) {
 
   async function loadAll() {
     setLoading(true);
-    const [{ data: prod }, { data: ord }] = await Promise.all([
-      supabase.from("products").select("*").order("created_at", { ascending: false }),
-      supabase.from("orders").select("*").order("created_at", { ascending: false }),
+    const [prodRes, ordRes] = await Promise.all([
+      fetch("/api/admin/products").then((r) => r.json()),
+      fetch("/api/admin/orders").then((r) => r.json()),
     ]);
-    setProducts(prod || []);
-    setOrders(ord || []);
+    setProducts(prodRes.ok ? prodRes.products : []);
+    setOrders(ordRes.ok ? ordRes.orders : []);
     setLoading(false);
   }
 
@@ -92,13 +91,17 @@ function OrdersPanel({ orders, onChanged }) {
   const [copiedId, setCopiedId] = useState(null);
 
   async function updateStatus(id, status) {
-    await supabase.from("orders").update({ status }).eq("id", id);
+    await fetch(`/api/admin/orders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
     onChanged();
   }
 
   async function deleteOrder(id) {
     if (!confirm(`Supprimer définitivement la commande ${id} ?`)) return;
-    await supabase.from("orders").delete().eq("id", id);
+    await fetch(`/api/admin/orders/${id}`, { method: "DELETE" });
     onChanged();
   }
 
@@ -170,7 +173,7 @@ function ProductsPanel({ products, onChanged }) {
 
   async function remove(id) {
     if (!confirm("Supprimer cet article ?")) return;
-    await supabase.from("products").delete().eq("id", id);
+    await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
     onChanged();
   }
 
@@ -230,12 +233,13 @@ function ProductForm({ initial, onDone, onCancel }) {
   const videoInputRef = useRef(null);
 
   async function uploadFile(file, folder) {
-    const ext = file.name.split(".").pop();
-    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("product-media").upload(path, file);
-    if (uploadError) throw uploadError;
-    const { data } = supabase.storage.from("product-media").getPublicUrl(path);
-    return data.publicUrl;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "Échec de l'envoi.");
+    return data.url;
   }
 
   async function handleImageFiles(fileList) {
@@ -290,15 +294,21 @@ function ProductForm({ initial, onDone, onCancel }) {
       video,
       description,
     };
-    let dbError;
-    if (initial?.id) {
-      ({ error: dbError } = await supabase.from("products").update(payload).eq("id", initial.id));
-    } else {
-      ({ error: dbError } = await supabase.from("products").insert(payload));
-    }
+    const res = initial?.id
+      ? await fetch(`/api/admin/products/${initial.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      : await fetch("/api/admin/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+    const data = await res.json();
     setSaving(false);
-    if (dbError) {
-      setError("Échec de l'enregistrement : " + dbError.message);
+    if (!data.ok) {
+      setError("Échec de l'enregistrement : " + (data.error || "réessaie."));
       return;
     }
     onDone();

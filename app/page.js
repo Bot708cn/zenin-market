@@ -88,20 +88,24 @@ export default function StorePage() {
     setFormError(false);
     setSubmitting(true);
     const id = "ZM-" + Math.random().toString(36).slice(2, 7).toUpperCase();
-    const { error } = await supabase.from("orders").insert({
-      id,
-      status: "en_attente",
-      customer_name: form.name,
-      customer_phone: form.phone,
-      customer_address: form.address,
-      customer_city: form.city,
-      payment_method: form.method,
-      items: cartDetailed.map((c) => ({ name: c.product.name, size: c.size, qty: c.qty, price: c.product.price })),
-      total,
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
+        customer_name: form.name,
+        customer_phone: form.phone,
+        customer_address: form.address,
+        customer_city: form.city,
+        payment_method: form.method,
+        items: cartDetailed.map((c) => ({ name: c.product.name, size: c.size, qty: c.qty, price: c.product.price })),
+        total,
+      }),
     });
+    const data = await res.json();
     setSubmitting(false);
-    if (error) {
-      alert("Erreur lors de l'enregistrement de la commande : " + error.message);
+    if (!data.ok) {
+      alert("Erreur lors de l'enregistrement de la commande : " + (data.error || "réessaie."));
       return;
     }
     setLastOrderId(id);

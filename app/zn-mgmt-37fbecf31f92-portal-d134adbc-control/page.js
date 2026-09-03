@@ -4,33 +4,31 @@ import React, { useState, useEffect } from "react";
 import { Lock, Mail, ArrowRight } from "lucide-react";
 import AdminDashboard from "./dashboard-content";
 
-const SESSION_KEY = "zenin_admin_session";
-
 export default function SecureAdminEntry() {
   const [authed, setAuthed] = useState(false);
   const [pseudo, setPseudo] = useState("");
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(SESSION_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setAuthed(true);
-        setPseudo(parsed.pseudo || "");
-      } catch (e) {}
-    }
-    setChecking(false);
+    fetch("/api/admin-session")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) {
+          setAuthed(true);
+          setPseudo(data.pseudo || "");
+        }
+      })
+      .catch(() => {})
+      .finally(() => setChecking(false));
   }, []);
 
   function handleSuccess(pseudoValue) {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ pseudo: pseudoValue }));
     setPseudo(pseudoValue);
     setAuthed(true);
   }
 
-  function handleLogout() {
-    sessionStorage.removeItem(SESSION_KEY);
+  async function handleLogout() {
+    await fetch("/api/admin-logout", { method: "POST" });
     setAuthed(false);
     setPseudo("");
   }
@@ -91,7 +89,7 @@ function LoginFlow({ onSuccess }) {
       const res = await fetch("/api/admin-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ step: "universal", password: universalPassword }),
+        body: JSON.stringify({ step: "universal", password: universalPassword, email }),
       });
       const data = await res.json();
       if (!data.ok) {
