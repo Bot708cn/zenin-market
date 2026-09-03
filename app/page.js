@@ -5,10 +5,12 @@ import { ShoppingBag, X, Plus, Minus, Check, Copy, ArrowRight, ArrowLeft } from 
 import { supabase } from "../lib/supabaseClient";
 
 const MOBILE_MONEY = [
-  { key: "mvola", label: "Mvola", number: "034 00 000 00" },
-  { key: "orange", label: "Orange Money", number: "032 00 000 00" },
-  { key: "airtel", label: "Airtel Money", number: "033 00 000 00" },
+  { key: "mvola", label: "Mvola", number: "038 25 298 89" },
+  { key: "orange", label: "Orange Money", number: "038 25 298 89" },
+  { key: "airtel", label: "Airtel Money", number: "038 25 298 89" },
 ];
+const PAYMENT_ACCOUNT_NAME = "Marie Anna";
+const PAYMENT_CONDITIONS = "Envoie le montant exact, aucun remboursement après envoi. Merci de vérifier le numéro avant d'envoyer, erreurs non remboursées.";
 
 const fmt = (n) => Number(n).toLocaleString("fr-FR") + " Ar";
 
@@ -460,7 +462,7 @@ function CheckoutView({ cartDetailed, total, form, setForm, onBack, onSubmit, me
 
       <div>
         <Field label="Nom complet" value={form.name} onChange={(v) => setForm({ ...form, name: v })} required />
-        <Field label="Téléphone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} required placeholder="034 XX XXX XX" />
+        <Field label="Téléphone" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} required placeholder="03X XX XXX XX" />
         <Field label="Adresse de livraison" value={form.address} onChange={(v) => setForm({ ...form, address: v })} required />
         <Field label="Ville" value={form.city} onChange={(v) => setForm({ ...form, city: v })} required />
 
@@ -495,6 +497,8 @@ function CheckoutView({ cartDetailed, total, form, setForm, onBack, onSubmit, me
               {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copié" : "Copier"}
             </button>
           </div>
+          <div style={{ fontSize: 12, color: "#9FD9FF", marginTop: 4 }}>Au nom de : {PAYMENT_ACCOUNT_NAME}</div>
+          <div style={{ fontSize: 11, color: "#7C89A6", marginTop: 10, lineHeight: 1.5 }}>{PAYMENT_CONDITIONS}</div>
           <div style={{ fontSize: 12, color: "#7C89A6", marginTop: 12 }}>
             2. Après paiement, envoie ta capture d'écran de confirmation sur notre page Facebook Zenin Market — on valide et on lance ta commande.
           </div>
@@ -532,13 +536,24 @@ function Field({ label, value, onChange, required, placeholder }) {
 }
 
 function ConfirmView({ orderId, onHome }) {
+  const [copied, setCopied] = useState(false);
   return (
     <div style={{ padding: "80px 20px", textAlign: "center", maxWidth: 420, margin: "0 auto" }}>
       <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#4FD0FF,#1E5CFF)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
         <Check size={28} color="#05070A" />
       </div>
       <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, margin: "0 0 10px" }}>Commande enregistrée</h2>
-      {orderId && <div style={{ color: "#9FD9FF", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>Référence : {orderId}</div>}
+      {orderId && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 14 }}>
+          <span style={{ color: "#9FD9FF", fontSize: 13, fontWeight: 600 }}>Référence : {orderId}</span>
+          <button
+            onClick={() => { navigator.clipboard?.writeText(orderId); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+            style={{ background: "none", border: "1px solid #1C2436", borderRadius: 8, padding: "5px 9px", color: "#EAF1FF", fontSize: 11, display: "flex", alignItems: "center", gap: 5 }}
+          >
+            {copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copié" : "Copier"}
+          </button>
+        </div>
+      )}
       <p style={{ color: "#7C89A6", fontSize: 14, lineHeight: 1.6, marginBottom: 26 }}>
         N'oublie pas d'envoyer ta preuve de paiement sur notre page Facebook Zenin Market pour qu'on valide ta commande et lance la livraison.
       </p>

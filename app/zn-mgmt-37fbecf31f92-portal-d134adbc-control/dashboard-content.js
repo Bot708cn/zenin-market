@@ -89,9 +89,23 @@ function TabButton({ icon, label, active, onClick }) {
 }
 
 function OrdersPanel({ orders, onChanged }) {
+  const [copiedId, setCopiedId] = useState(null);
+
   async function updateStatus(id, status) {
     await supabase.from("orders").update({ status }).eq("id", id);
     onChanged();
+  }
+
+  async function deleteOrder(id) {
+    if (!confirm(`Supprimer définitivement la commande ${id} ?`)) return;
+    await supabase.from("orders").delete().eq("id", id);
+    onChanged();
+  }
+
+  function copyId(id) {
+    navigator.clipboard?.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
   }
 
   return (
@@ -106,7 +120,15 @@ function OrdersPanel({ orders, onChanged }) {
         <div key={o.id} style={{ background: "#0D1220", border: "1px solid #1C2436", borderRadius: 12, padding: 14, marginBottom: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 8 }}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>{o.id}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>{o.id}</span>
+                <button
+                  onClick={() => copyId(o.id)}
+                  style={{ background: "none", border: "1px solid #1C2436", borderRadius: 6, padding: "3px 6px", color: "#7C89A6", fontSize: 10, display: "flex", alignItems: "center", gap: 3 }}
+                >
+                  {copiedId === o.id ? "Copié" : "Copier"}
+                </button>
+              </div>
               <div style={{ fontSize: 11, color: "#7C89A6" }}>{fmtDate(o.created_at)}</div>
             </div>
             <div style={{ fontWeight: 700, color: "#9FD9FF", fontSize: 14 }}>{fmt(o.total)}</div>
@@ -124,12 +146,19 @@ function OrdersPanel({ orders, onChanged }) {
           <select
             value={o.status}
             onChange={(e) => updateStatus(o.id, e.target.value)}
-            style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #1C2436", background: "#05070A", color: "#9FD9FF", fontSize: 12, fontWeight: 600 }}
+            style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #1C2436", background: "#05070A", color: "#9FD9FF", fontSize: 12, fontWeight: 600, marginBottom: 8 }}
           >
             {STATUS_ORDER.map((s) => (
               <option key={s} value={s}>{STATUS_LABELS[s]}</option>
             ))}
           </select>
+
+          <button
+            onClick={() => deleteOrder(o.id)}
+            style={{ width: "100%", padding: "9px 10px", borderRadius: 8, border: "1px solid #1C2436", background: "none", color: "#FF7C7C", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}
+          >
+            <Trash2 size={13} /> Supprimer la commande
+          </button>
         </div>
       ))}
     </div>
