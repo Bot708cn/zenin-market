@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Package, ClipboardList, LogOut, Trash2, Pencil, Plus, X, ArrowLeft } from "lucide-react";
-import { supabase } from "../../../lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 
 const fmt = (n) => Number(n).toLocaleString("fr-FR") + " Ar";
 const fmtDate = (d) => new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
